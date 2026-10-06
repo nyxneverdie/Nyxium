@@ -24,7 +24,7 @@
 ## ⚡ Quick start
 
 ```bash
-git clone <your-remote> nyxium && cd nyxium
+git clone https://github.com/nyxneverdie/Nyxium && cd nyxium
 npm install          # runs the electron path fixup automatically
 npm run dev          # hot-reloading dev window
 ```
