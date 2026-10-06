@@ -1,0 +1,42 @@
+{
+  "name": "nyxium",
+  "version": "0.1.0",
+  "description": "Nyxium \u2014 the local-first developer workspace",
+  "main": "out/main/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "tsc --noEmit && electron-vite build",
+    "start": "electron-vite preview",
+    "typecheck": "tsc --noEmit",
+    "check": "node scripts/run-check.mjs src/main/services/git.check.ts && node scripts/run-check.mjs src/main/services/ai/tools.check.ts && node scripts/run-check.mjs src/main/services/ai/providers.check.ts && node scripts/run-check.mjs src/main/services/ai/custom.check.ts && node scripts/run-check.mjs src/main/services/cloud/backup.check.ts && node scripts/run-check.mjs src/main/services/infra.check.ts && node scripts/run-check.mjs src/main/services/webviews.check.ts",
+    "postinstall": "node scripts/fix-electron-path.mjs"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.14",
+    "@types/node": "^24.6.2",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.0.4",
+    "electron": "^38.2.0",
+    "electron-vite": "^4.0.1",
+    "tailwindcss": "^4.1.14",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.9"
+  },
+  "dependencies": {
+    "@lydell/node-pty": "^1.2.0-beta.15",
+    "@xterm/addon-fit": "^0.11.0",
+    "@xterm/addon-web-links": "^0.12.0",
+    "@xterm/xterm": "^6.0.0",
+    "lucide-react": "^0.545.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "zustand": "^5.0.8"
+  },
+  "allowScripts": {
+    "electron@38.8.6": true,
+    "esbuild@0.25.12": true,
+    "esbuild@0.28.2": true
+  }
+}

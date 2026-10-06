@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", "Roboto", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+}
+
+/* Semantic tokens. Values are injected at runtime by PaletteProvider;
+   these defaults keep the first paint from flashing white. */
+:root {
+  --nyx-background: #0d0f14;
+  --nyx-surface: #141821;
+  --nyx-surfaceVariant: #1b2030;
+  --nyx-surfaceElevated: #1f2535;
+  --nyx-textPrimary: #e6e9f0;
+  --nyx-textSecondary: #a8b0c2;
+  --nyx-textMuted: #6b7488;
+  --nyx-accent: #7aa2f7;
+  --nyx-border: #232838;
+  --nyx-density: 1;
+}
+
+* { border-color: var(--nyx-border); }
+
+html, body, #root { height: 100%; margin: 0; overflow: hidden; }
+
+body {
+  background: var(--nyx-background);
+  color: var(--nyx-textPrimary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--nyx-outline, #3a4255);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover { background-clip: border-box; }
+
+/* Honours both the OS setting and Nyxium's own Reduced Motion preference. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+:root[data-reduced-motion="true"] *,
+:root[data-reduced-motion="true"] *::before,
+:root[data-reduced-motion="true"] *::after {
+  animation-duration: 0.01ms !important;
+  transition-duration: 0.01ms !important;
+}
+
+@keyframes nyx-fade-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.nyx-enter { animation: nyx-fade-in 160ms cubic-bezier(0.2, 0, 0, 1); }
+
+/* A visible focus ring on every keyboard-focused control. Mouse clicks do not
+   draw one, so the UI stays quiet for pointer users. */
+:focus-visible {
+  outline: 2px solid var(--nyx-primary, #7aa2f7);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+button:focus-visible, a:focus-visible, [role="button"]:focus-visible { outline-offset: 1px; }
+
+/* Nothing in a desktop workspace should scroll sideways by accident. */
+#root { overflow-x: hidden; }
+
+/* Disabled controls must read as disabled, not merely be inert. */
+button:disabled, select:disabled, input:disabled, textarea:disabled { cursor: not-allowed; }
+
+/* The native scrollbar follows the palette rather than the system theme. */
+::-webkit-scrollbar-corner { background: transparent; }

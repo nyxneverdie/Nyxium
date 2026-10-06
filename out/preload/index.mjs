@@ -1,0 +1,185 @@
+import { contextBridge, ipcRenderer, webUtils } from "electron";
+function subscribe(channel, cb) {
+  const handler = (_e, payload) => cb(payload);
+  ipcRenderer.on(channel, handler);
+  return () => ipcRenderer.off(channel, handler);
+}
+const api = {
+  config: {
+    get: () => ipcRenderer.invoke("config:get"),
+    patch: (patch) => ipcRenderer.invoke("config:patch", patch)
+  },
+  palette: {
+    current: () => ipcRenderer.invoke("palette:current"),
+    detect: () => ipcRenderer.invoke("palette:detect"),
+    reload: () => ipcRenderer.invoke("palette:reload"),
+    onChange: (cb) => subscribe("palette:changed", cb)
+  },
+  workspaces: {
+    list: () => ipcRenderer.invoke("workspaces:list"),
+    create: (name) => ipcRenderer.invoke("workspaces:create", name)
+  },
+  projects: {
+    list: () => ipcRenderer.invoke("projects:list"),
+    import: () => ipcRenderer.invoke("projects:import"),
+    create: () => ipcRenderer.invoke("projects:import"),
+    remove: (id) => ipcRenderer.invoke("projects:remove", id),
+    touch: (id) => ipcRenderer.invoke("projects:touch", id),
+    setNotes: (id, notes) => ipcRenderer.invoke("projects:setNotes", id, notes),
+    git: (id) => ipcRenderer.invoke("projects:git", id),
+    env: (id) => ipcRenderer.invoke("projects:env", id),
+    reveal: (id) => ipcRenderer.invoke("projects:reveal", id)
+  },
+  services: {
+    list: () => ipcRenderer.invoke("services:list"),
+    add: (s) => ipcRenderer.invoke("services:add", s),
+    remove: (id) => ipcRenderer.invoke("services:remove", id),
+    openExternal: (url) => ipcRenderer.invoke("services:openExternal", url)
+  },
+  notifications: {
+    list: () => ipcRenderer.invoke("notifications:list"),
+    markAllRead: () => ipcRenderer.invoke("notifications:markAllRead"),
+    clear: () => ipcRenderer.invoke("notifications:clear"),
+    onNew: (cb) => subscribe("notifications:new", cb)
+  },
+  terminal: {
+    shells: () => ipcRenderer.invoke("terminal:shells"),
+    create: (opts) => ipcRenderer.invoke("terminal:create", opts),
+    write: (id, data) => ipcRenderer.send("terminal:write", id, data),
+    resize: (id, cols, rows) => ipcRenderer.send("terminal:resize", id, cols, rows),
+    kill: (id) => ipcRenderer.send("terminal:kill", id),
+    onData: (cb) => subscribe("terminal:data", cb),
+    onExit: (cb) => subscribe("terminal:exit", cb)
+  },
+  git: {
+    status: (id) => ipcRenderer.invoke("git:status", id),
+    diff: (id, file, staged) => ipcRenderer.invoke("git:diff", id, file, staged),
+    log: (id, limit) => ipcRenderer.invoke("git:log", id, limit),
+    branches: (id) => ipcRenderer.invoke("git:branches", id),
+    stashes: (id) => ipcRenderer.invoke("git:stashes", id),
+    stage: (id, paths) => ipcRenderer.invoke("git:stage", id, paths),
+    unstage: (id, paths) => ipcRenderer.invoke("git:unstage", id, paths),
+    discard: (id, paths) => ipcRenderer.invoke("git:discard", id, paths),
+    commit: (id, message) => ipcRenderer.invoke("git:commit", id, message),
+    pull: (id) => ipcRenderer.invoke("git:pull", id),
+    push: (id) => ipcRenderer.invoke("git:push", id),
+    fetch: (id) => ipcRenderer.invoke("git:fetch", id),
+    checkout: (id, name) => ipcRenderer.invoke("git:checkout", id, name),
+    createBranch: (id, name) => ipcRenderer.invoke("git:createBranch", id, name),
+    merge: (id, name) => ipcRenderer.invoke("git:merge", id, name),
+    stashPush: (id, message) => ipcRenderer.invoke("git:stashPush", id, message),
+    stashPop: (id, ref) => ipcRenderer.invoke("git:stashPop", id, ref),
+    stashDrop: (id, ref) => ipcRenderer.invoke("git:stashDrop", id, ref)
+  },
+  snippets: {
+    list: () => ipcRenderer.invoke("snippets:list"),
+    save: (id, draft) => ipcRenderer.invoke("snippets:save", id, draft),
+    remove: (id) => ipcRenderer.invoke("snippets:remove", id),
+    copy: (code) => ipcRenderer.invoke("snippets:copy", code)
+  },
+  search: {
+    files: (id, query) => ipcRenderer.invoke("search:files", id, query),
+    code: (id, query) => ipcRenderer.invoke("search:code", id, query),
+    symbol: (id, name) => ipcRenderer.invoke("search:symbol", id, name)
+  },
+  ai: {
+    config: () => ipcRenderer.invoke("ai:config"),
+    patchConfig: (patch) => ipcRenderer.invoke("ai:patchConfig", patch),
+    detect: () => ipcRenderer.invoke("ai:detect"),
+    models: () => ipcRenderer.invoke("ai:models"),
+    pull: (model) => ipcRenderer.invoke("ai:pull", model),
+    removeModel: (model) => ipcRenderer.invoke("ai:removeModel", model),
+    setCustomKey: (key) => ipcRenderer.invoke("ai:setCustomKey", key),
+    secretsEncrypted: () => ipcRenderer.invoke("ai:secretsEncrypted"),
+    sessions: () => ipcRenderer.invoke("ai:sessions"),
+    createSession: (projectId) => ipcRenderer.invoke("ai:createSession", projectId),
+    renameSession: (id, title) => ipcRenderer.invoke("ai:renameSession", id, title),
+    deleteSession: (id) => ipcRenderer.invoke("ai:deleteSession", id),
+    send: (opts) => ipcRenderer.invoke("ai:send", opts),
+    cancel: (sessionId) => ipcRenderer.send("ai:cancel", sessionId),
+    approve: (callId, approved) => ipcRenderer.send("ai:approve", callId, approved),
+    applyEdit: (projectId, path, content) => ipcRenderer.invoke("ai:applyEdit", projectId, path, content),
+    onStream: (cb) => subscribe("ai:stream", cb),
+    onPullProgress: (cb) => subscribe("ai:pullProgress", cb)
+  },
+  cloud: {
+    config: () => ipcRenderer.invoke("cloud:config"),
+    patchConfig: (patch) => ipcRenderer.invoke("cloud:patchConfig", patch),
+    status: () => ipcRenderer.invoke("cloud:status"),
+    setServiceAccount: (json) => ipcRenderer.invoke("cloud:setServiceAccount", json),
+    buckets: () => ipcRenderer.invoke("cloud:buckets"),
+    list: (prefix, pageToken) => ipcRenderer.invoke("cloud:list", prefix, pageToken),
+    search: (prefix, query) => ipcRenderer.invoke("cloud:search", prefix, query),
+    createFolder: (prefix) => ipcRenderer.invoke("cloud:createFolder", prefix),
+    remove: (name) => ipcRenderer.invoke("cloud:remove", name),
+    move: (from, to) => ipcRenderer.invoke("cloud:move", from, to),
+    upload: (localPath, objectName) => ipcRenderer.invoke("cloud:upload", localPath, objectName),
+    uploadDialog: (prefix) => ipcRenderer.invoke("cloud:uploadDialog", prefix),
+    download: (name) => ipcRenderer.invoke("cloud:download", name),
+    previewBackup: (projectId) => ipcRenderer.invoke("cloud:previewBackup", projectId),
+    backup: (projectId) => ipcRenderer.invoke("cloud:backup", projectId),
+    restore: (objectName) => ipcRenderer.invoke("cloud:restore", objectName),
+    transfers: () => ipcRenderer.invoke("cloud:transfers"),
+    cancel: (id) => ipcRenderer.send("cloud:cancel", id),
+    onProgress: (cb) => subscribe("cloud:progress", cb)
+  },
+  docker: {
+    available: () => ipcRenderer.invoke("docker:available"),
+    containers: () => ipcRenderer.invoke("docker:containers"),
+    images: () => ipcRenderer.invoke("docker:images"),
+    volumes: () => ipcRenderer.invoke("docker:volumes"),
+    networks: () => ipcRenderer.invoke("docker:networks"),
+    logs: (id, tail) => ipcRenderer.invoke("docker:logs", id, tail),
+    start: (id) => ipcRenderer.invoke("docker:start", id),
+    stop: (id) => ipcRenderer.invoke("docker:stop", id),
+    restart: (id) => ipcRenderer.invoke("docker:restart", id),
+    removeContainer: (id) => ipcRenderer.invoke("docker:removeContainer", id),
+    removeImage: (id) => ipcRenderer.invoke("docker:removeImage", id),
+    removeVolume: (name) => ipcRenderer.invoke("docker:removeVolume", name),
+    shellCommand: (id) => ipcRenderer.invoke("docker:shellCommand", id)
+  },
+  db: {
+    list: () => ipcRenderer.invoke("db:list"),
+    save: (conn, password) => ipcRenderer.invoke("db:save", conn, password),
+    remove: (id) => ipcRenderer.invoke("db:remove", id),
+    test: (id) => ipcRenderer.invoke("db:test", id),
+    tables: (id) => ipcRenderer.invoke("db:tables", id),
+    schema: (id, table) => ipcRenderer.invoke("db:schema", id, table),
+    browse: (id, table, limit) => ipcRenderer.invoke("db:browse", id, table, limit),
+    query: (id, sql) => ipcRenderer.invoke("db:query", id, sql),
+    isDestructive: (sql) => ipcRenderer.invoke("db:isDestructive", sql)
+  },
+  api: {
+    send: (opts) => ipcRenderer.invoke("api:send", opts),
+    saved: () => ipcRenderer.invoke("api:saved"),
+    save: (req) => ipcRenderer.invoke("api:save", req),
+    remove: (id) => ipcRenderer.invoke("api:remove", id),
+    history: () => ipcRenderer.invoke("api:history"),
+    clearHistory: () => ipcRenderer.invoke("api:clearHistory")
+  },
+  webview: {
+    open: (serviceId, url, bounds) => ipcRenderer.invoke("webview:open", serviceId, url, bounds),
+    setBounds: (serviceId, bounds) => ipcRenderer.send("webview:setBounds", serviceId, bounds),
+    showOnly: (serviceId, bounds) => ipcRenderer.send("webview:showOnly", serviceId, bounds),
+    close: (serviceId) => ipcRenderer.send("webview:close", serviceId),
+    back: (serviceId) => ipcRenderer.send("webview:back", serviceId),
+    forward: (serviceId) => ipcRenderer.send("webview:forward", serviceId),
+    reload: (serviceId) => ipcRenderer.send("webview:reload", serviceId),
+    clearSession: (serviceId) => ipcRenderer.invoke("webview:clearSession", serviceId),
+    onState: (cb) => subscribe("webview:state", cb)
+  },
+  /** The real path of a dropped File. Electron no longer exposes File.path. */
+  filePath: (file) => {
+    try {
+      return webUtils.getPathForFile(file) || null;
+    } catch {
+      return null;
+    }
+  },
+  window: {
+    minimize: () => ipcRenderer.send("window:minimize"),
+    toggleMaximize: () => ipcRenderer.send("window:toggleMaximize"),
+    close: () => ipcRenderer.send("window:close")
+  }
+};
+contextBridge.exposeInMainWorld("nyx", api);
